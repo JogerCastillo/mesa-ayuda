@@ -1,0 +1,38 @@
+[
+  {
+    "id": "t-1001",
+    "title": "No puedo entrar al panel",
+    "description": "El sistema rechaza mis credenciales despues del cambio de clave.",
+    "category": "acceso",
+    "priority": "alta",
+    "status": "abierto",
+    "createdAt": "2026-04-22T09:15:00.000Z",
+    "updatedAt": "2026-04-22T09:15:00.000Z",
+    "createdBy": "cliente@empresa.local",
+    "assignedTo": "agente1@soporte.local"
+  },
+  {
+    "id": "t-1002",
+    "title": "Factura con datos incompletos",
+    "description": "Falta el NIT en la factura de marzo para dos clientes.",
+    "category": "facturacion",
+    "priority": "media",
+    "status": "en_progreso",
+    "createdAt": "2026-04-21T14:00:00.000Z",
+    "updatedAt": "2026-04-23T10:12:00.000Z",
+    "createdBy": "ventas@empresa.local",
+    "assignedTo": "agente2@soporte.local"
+  },
+  {
+    "id": "t-1003",
+    "title": "Solicitud de reporte semanal",
+    "description": "Necesitamos un reporte CSV de incidencias cerradas por area.",
+    "category": "reportes",
+    "priority": "baja",
+    "status": "resuelto",
+    "createdAt": "2026-04-18T08:30:00.000Z",
+    "updatedAt": "2026-04-20T16:45:00.000Z",
+    "createdBy": "direccion@empresa.local",
+    "assignedTo": "agente1@soporte.local"
+  }
+]

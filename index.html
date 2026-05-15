@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mesa de Ayuda | Dashboard de Tickets</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <div class="bg-grid" aria-hidden="true"></div>
+
+    <header class="topbar container">
+      <div>
+        <p class="eyebrow">Operacion de soporte</p>
+        <h1>Mesa de ayuda para soporte interno</h1>
+        <p class="subtitle">Administra tickets, prioridades y carga operativa en tiempo real.</p>
+      </div>
+
+      <section class="session-box" id="sessionBox">
+        <form id="loginForm" class="login-form">
+          <h2>Ingresar</h2>
+          <label>
+            Correo
+            <input type="email" name="email" required placeholder="admin@soporte.local" />
+          </label>
+          <label>
+            Contrasena
+            <input type="password" name="password" required placeholder="********" />
+          </label>
+          <button type="submit">Entrar</button>
+        </form>
+
+        <div id="sessionInfo" class="session-info hidden">
+          <p><strong>Sesion:</strong> <span id="sessionName">-</span></p>
+          <p><strong>Rol:</strong> <span id="sessionRole">-</span></p>
+          <button id="logoutBtn" type="button" class="ghost">Cerrar sesion</button>
+        </div>
+      </section>
+    </header>
+
+    <main class="container stack" id="appMain">
+      <section class="meta-row">
+        <span id="connectionBadge" class="badge">Detectando conexion...</span>
+        <p id="feedback" class="feedback"></p>
+      </section>
+
+      <section class="kpi-grid" id="kpiGrid">
+        <article class="kpi-card">
+          <p>Total</p>
+          <strong id="kpiTotal">0</strong>
+        </article>
+        <article class="kpi-card">
+          <p>Abiertos</p>
+          <strong id="kpiOpen">0</strong>
+        </article>
+        <article class="kpi-card">
+          <p>En progreso</p>
+          <strong id="kpiInProgress">0</strong>
+        </article>
+        <article class="kpi-card">
+          <p>Resueltos</p>
+          <strong id="kpiResolved">0</strong>
+        </article>
+        <article class="kpi-card danger">
+          <p>Prioridad alta</p>
+          <strong id="kpiHigh">0</strong>
+        </article>
+      </section>
+
+      <section class="panel two-cols">
+        <article>
+          <h2>Crear ticket</h2>
+          <form id="ticketForm" class="ticket-form">
+            <label>
+              Titulo
+              <input name="title" required minlength="3" maxlength="120" />
+            </label>
+            <label>
+              Descripcion
+              <textarea name="description" rows="3" required minlength="5" maxlength="1200"></textarea>
+            </label>
+            <div class="row-2">
+              <label>
+                Categoria
+                <input name="category" required placeholder="acceso, facturacion, reportes..." />
+              </label>
+              <label>
+                Prioridad
+                <select name="priority" required>
+                  <option value="media">Media</option>
+                  <option value="alta">Alta</option>
+                  <option value="baja">Baja</option>
+                </select>
+              </label>
+            </div>
+            <div class="row-2">
+              <label>
+                Correo solicitante
+                <input name="createdBy" type="email" placeholder="cliente@empresa.local" />
+              </label>
+              <label>
+                Asignar a
+                <select name="assignedTo" id="assignedToSelect">
+                  <option value="">Sin asignar</option>
+                </select>
+              </label>
+            </div>
+            <button type="submit">Registrar ticket</button>
+          </form>
+        </article>
+
+        <article>
+          <h2>Filtros</h2>
+          <form id="filtersForm" class="filters-form">
+            <label>
+              Buscar
+              <input name="q" placeholder="titulo, descripcion o categoria" />
+            </label>
+            <label>
+              Estado
+              <select name="status">
+                <option value="">Todos</option>
+                <option value="abierto">Abierto</option>
+                <option value="en_progreso">En progreso</option>
+                <option value="resuelto">Resuelto</option>
+                <option value="cerrado">Cerrado</option>
+              </select>
+            </label>
+            <label>
+              Prioridad
+              <select name="priority">
+                <option value="">Todas</option>
+                <option value="alta">Alta</option>
+                <option value="media">Media</option>
+                <option value="baja">Baja</option>
+              </select>
+            </label>
+            <label class="check-line">
+              <input type="checkbox" name="mine" />
+              Ver solo tickets asignados a mi
+            </label>
+          </form>
+        </article>
+      </section>
+
+      <section class="panel">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Categoria</th>
+                <th>Prioridad</th>
+                <th>Estado</th>
+                <th>Asignado a</th>
+                <th>Actualizado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="ticketsBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script src="./js/app.js"></script>
+  </body>
+</html>
