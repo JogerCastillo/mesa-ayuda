@@ -11,14 +11,17 @@ Pasos recomendados antes y durante el despliegue:
 - Añadir secret `NODE_ENV=production` si se requiere.
 - Verificar que el workflow ejecuta `npm test` y el `smoke-test`.
 
-3) Despliegue del backend (opciones: Render, Railway, Heroku, VPS)
-- Crear servicio con variables de entorno: `JWT_SECRET`, `BCRYPT_ROUNDS`, `CREATE_DEV_USERS=false`.
-- Establecer health check a `/api/health` o similar.
-- Configurar CORS solo para el dominio del frontend.
+3) Despliegue del backend
+- Usar un host compatible con Node.js y persistencia local mínima.
+- Crear el servicio con variables de entorno: `JWT_SECRET`, `BCRYPT_ROUNDS`, `CREATE_DEV_USERS=false`.
+- Si el frontend se publica en otro dominio, definir `CORS_ORIGIN` con el origen exacto permitido.
+- Establecer health check a `/api/health`.
+- Verificar que el host permita mantener el proceso activo o gestionar arranque bajo demanda.
 
-4) Despliegue del frontend (Netlify/Vercel)
-- Build command: `npm run build` o subir estáticos según el proyecto.
-- Establecer `API_BASE_URL` en variables de entorno de Netlify (o inyectar en build).
+4) Despliegue del frontend
+- Usar Netlify para servir el frontend estático.
+- Publicar la raíz del proyecto como sitio estático y mantener `index.html` como entrada.
+- Apuntar la app a la API real con `window.__MESA_AYUDA_API_BASE_URL__`, `window.API_BASE_URL` o el meta tag `api-base-url`.
 - Habilitar HTTPS y dominio personalizado si aplica.
 
 5) Validación post-despliegue

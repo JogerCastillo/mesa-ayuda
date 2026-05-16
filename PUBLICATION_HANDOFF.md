@@ -7,7 +7,7 @@ Este documento resume el orden recomendado para publicar el proyecto de forma li
 Si el directorio aún no tiene repositorio, ejecutar desde la carpeta raíz del proyecto:
 
 ```powershell
-Set-Location 'c:\Users\casti\Documentos\Empresas\portafolio\mesa_ayuda'
+Set-Location 'c:\Users\casti\Documentos\Proyectos\mesa_ayuda'
 git init
 git branch -M main
 ```
@@ -40,6 +40,7 @@ Antes de publicar la aplicación:
 
 - Crear los Secrets requeridos en GitHub Actions.
 - Configurar `JWT_SECRET` en el proveedor de backend.
+- Definir `CORS_ORIGIN` si frontend y backend viven en dominios distintos.
 - Mantener `CREATE_DEV_USERS=false` en staging y producción.
 - Verificar que `backend/.env` no se suba.
 - Confirmar que el smoke test sigue pasando.
@@ -48,8 +49,8 @@ Antes de publicar la aplicación:
 
 1. Subir el repositorio a GitHub.
 2. Verificar el workflow de CI.
-3. Desplegar backend.
-4. Desplegar frontend.
+3. Desplegar el backend en un host compatible con Node.js.
+4. Desplegar el frontend en Netlify.
 5. Probar login, listado, creación y actualización de tickets.
 
 ## 7) Criterio de listo
@@ -61,3 +62,14 @@ El proyecto está listo cuando:
 - El commit inicial está limpio.
 - CI pasa sin secretos embebidos.
 - El frontend y el backend responden correctamente en producción.
+
+## 8) Ruta recomendada
+
+Para este proyecto, la combinación más práctica es:
+
+- Frontend: Netlify.
+- Backend: un host compatible con Node.js.
+- Persistencia: JSON local como ya está implementado.
+- CORS: permitir solo el dominio del frontend.
+
+Esta ruta mantiene el proyecto consistente para producción y facilita su operación.

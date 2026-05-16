@@ -1,13 +1,13 @@
 # Mesa de Ayuda (Tickets de Soporte)
 
-Aplicación web para gestionar tickets internos de soporte con autenticación por roles, filtros operativos y métricas de seguimiento.
+Aplicación web profesional para gestionar tickets internos de soporte, con autenticación por roles, filtros operativos y métricas de seguimiento.
 
-## Capacidades principales
+## Capacidades clave
 - Inicio de sesión con JWT y control de permisos por rol (`admin`, `agente`).
 - Gestión de tickets con creación, edición, asignación, cambio de estado y eliminación (solo admin).
 - Filtros por texto, estado, prioridad y tickets propios.
 - KPI operativos: total, abiertos, en progreso, resueltos y prioridad alta.
-- Persistencia en JSON para despliegues ligeros sin base de datos externa.
+- Persistencia en JSON para despliegues ligeros sin dependencia de base de datos externa.
 
 ## Stack
 - Frontend: HTML, CSS, JavaScript.
@@ -70,6 +70,12 @@ npm test
 
 ## Despliegue
 Antes de desplegar, seguir la [Checklist de despliegue](DEPLOYMENT_CHECKLIST.md) y las recomendaciones de [Security Setup](SECURITY_SETUP.md).
+
+Ruta recomendada:
+- Frontend en Netlify.
+- Backend en un host compatible con Node.js.
+- `CORS_ORIGIN` configurado con el dominio del frontend.
+- `JWT_SECRET` y demás secretos cargados como variables de entorno.
 
 ## Seguridad
 - `JWT_SECRET` obligatorio (no hay fallback inseguro).

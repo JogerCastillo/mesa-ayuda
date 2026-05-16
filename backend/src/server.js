@@ -13,6 +13,10 @@ const PORT = Number(process.env.PORT || 4200);
 const JWT_SECRET = process.env.JWT_SECRET;
 const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS || 10);
 const CREATE_DEV_USERS = String(process.env.CREATE_DEV_USERS || "").toLowerCase() === "true";
+const CORS_ORIGINS = String(process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 const TICKETS_FILE = path.join(__dirname, "..", "data", "tickets.json");
 
 if (!JWT_SECRET) {
@@ -24,7 +28,21 @@ if (!Number.isInteger(BCRYPT_ROUNDS) || BCRYPT_ROUNDS < 8 || BCRYPT_ROUNDS > 14)
 }
 
 const app = express();
-app.use(cors());
+app.use(
+  cors(
+    CORS_ORIGINS.length
+      ? {
+          origin(origin, callback) {
+            if (!origin || CORS_ORIGINS.includes(origin)) {
+              return callback(null, true);
+            }
+
+            return callback(new Error(`Origin ${origin} not allowed by CORS.`));
+          }
+        }
+      : undefined
+  )
+);
 app.use(express.json());
 
 const users = [];
@@ -37,7 +55,7 @@ if (CREATE_DEV_USERS) {
   const agente2Password = process.env.AGENTE2_PASSWORD;
 
   if (!adminPassword || !agente1Password || !agente2Password) {
-    console.warn("CREATE_DEV_USERS is enabled but ADMIN_PASSWORD, AGENTE1_PASSWORD or AGENTE2_PASSWORD is missing.");
+    console.warn("CREATE_DEV_USERS está habilitado, pero falta ADMIN_PASSWORD, AGENTE1_PASSWORD o AGENTE2_PASSWORD.");
   } else {
     users.push(
       {
@@ -62,7 +80,7 @@ if (CREATE_DEV_USERS) {
         role: "agente"
       }
     );
-    console.info("Development users loaded from environment variables.");
+    console.info("Usuarios de desarrollo cargados desde variables de entorno.");
   }
 }
 
@@ -112,13 +130,13 @@ const requireAuth = (req, res, next) => {
     req.user = payload;
     return next();
   } catch {
-    return res.status(401).json({ message: "Token invalido o expirado." });
+    return res.status(401).json({ message: "Token inválido o expirado." });
   }
 };
 
 const requireRole = (...allowedRoles) => (req, res, next) => {
   if (!req.user || !allowedRoles.includes(req.user.role)) {
-    return res.status(403).json({ message: "No tienes permisos para esta accion." });
+    return res.status(403).json({ message: "No tienes permisos para esta acción." });
   }
   return next();
 };
@@ -144,7 +162,7 @@ app.post("/api/auth/login", (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
-      message: "Datos de acceso invalidos.",
+      message: "Datos de acceso inválidos.",
       issues: parsed.error.issues
     });
   }
@@ -219,7 +237,7 @@ app.post("/api/tickets", requireAuth, (req, res) => {
   const parsed = createTicketSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
-      message: "Datos invalidos para crear ticket.",
+      message: "Datos inválidos para crear ticket.",
       issues: parsed.error.issues
     });
   }
@@ -253,7 +271,7 @@ app.patch("/api/tickets/:id", requireAuth, (req, res) => {
   const parsed = updateTicketSchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({
-      message: "Datos invalidos para actualizar ticket.",
+      message: "Datos inválidos para actualizar ticket.",
       issues: parsed.error.issues
     });
   }

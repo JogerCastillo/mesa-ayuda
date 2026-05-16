@@ -1,4 +1,27 @@
-const API_BASE_URL = "http://localhost:4200/api";
+const getApiBaseUrl = () => {
+  const configuredUrl = window.__MESA_AYUDA_API_BASE_URL__ || window.API_BASE_URL;
+
+  if (typeof configuredUrl === "string" && configuredUrl.trim()) {
+    return configuredUrl.replace(/\/$/, "");
+  }
+
+  const metaTag = document.querySelector('meta[name="api-base-url"]');
+  if (metaTag?.content) {
+    return metaTag.content.replace(/\/$/, "");
+  }
+
+  if (
+    window.location.protocol === "file:" ||
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+  ) {
+    return "http://localhost:4200/api";
+  }
+
+  return `${window.location.origin}/api`;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 const AUTH_TOKEN_KEY = "mesa_ayuda_auth_token";
 const AUTH_USER_KEY = "mesa_ayuda_auth_user";
 
@@ -119,7 +142,7 @@ const apiRequest = async (path, options = {}) => {
 
   const json = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new Error(json?.message || "No fue posible completar la accion.");
+    throw new Error(json?.message || "No fue posible completar la acción.");
   }
 
   return json;
@@ -313,7 +336,7 @@ const deleteTicket = async (id) => {
 const onLogin = async (event) => {
   event.preventDefault();
   if (!state.apiAvailable) {
-    showFeedback("La API no esta disponible. Levanta el backend para iniciar sesion.", true);
+    showFeedback("La API no está disponible. Inicia el backend para iniciar sesión.", true);
     return;
   }
 
@@ -334,7 +357,7 @@ const onLogin = async (event) => {
     await loadAgents();
     fillAssignedSelect();
     await loadTickets();
-    showFeedback(`Sesion iniciada como ${state.user.role}.`);
+    showFeedback(`Sesión iniciada como ${state.user.role}.`);
     elements.loginForm.reset();
   } catch (error) {
     showFeedback(error.message, true);
@@ -346,13 +369,13 @@ const onLogout = () => {
   updateSessionUI();
   state.tickets = [];
   renderAll();
-  showFeedback("Sesion cerrada.");
+  showFeedback("Sesión cerrada.");
 };
 
 const onCreateTicket = async (event) => {
   event.preventDefault();
   if (!state.user) {
-    showFeedback("Debes iniciar sesion para crear tickets.", true);
+    showFeedback("Debes iniciar sesión para crear tickets.", true);
     return;
   }
 
@@ -460,9 +483,9 @@ const init = async () => {
   }
 
   if (!state.user) {
-    showFeedback("Inicia sesion para comenzar.");
+    showFeedback("Inicia sesión para comenzar.");
   } else {
-    showFeedback("Sesion activa con API.");
+    showFeedback("Sesión activa con API.");
   }
 };
 

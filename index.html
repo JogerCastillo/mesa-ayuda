@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Mesa de Ayuda | Dashboard de Tickets</title>
+    <title>Mesa de Ayuda | Panel de tickets</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -17,7 +17,7 @@
 
     <header class="topbar container">
       <div>
-        <p class="eyebrow">Operacion de soporte</p>
+        <p class="eyebrow">Operación de soporte</p>
         <h1>Mesa de ayuda para soporte interno</h1>
         <p class="subtitle">Administra tickets, prioridades y carga operativa en tiempo real.</p>
       </div>
@@ -30,23 +30,23 @@
             <input type="email" name="email" required placeholder="admin@soporte.local" />
           </label>
           <label>
-            Contrasena
+            Contraseña
             <input type="password" name="password" required placeholder="********" />
           </label>
           <button type="submit">Entrar</button>
         </form>
 
         <div id="sessionInfo" class="session-info hidden">
-          <p><strong>Sesion:</strong> <span id="sessionName">-</span></p>
+          <p><strong>Sesión:</strong> <span id="sessionName">-</span></p>
           <p><strong>Rol:</strong> <span id="sessionRole">-</span></p>
-          <button id="logoutBtn" type="button" class="ghost">Cerrar sesion</button>
+          <button id="logoutBtn" type="button" class="ghost">Cerrar sesión</button>
         </div>
       </section>
     </header>
 
     <main class="container stack" id="appMain">
       <section class="meta-row">
-        <span id="connectionBadge" class="badge">Detectando conexion...</span>
+        <span id="connectionBadge" class="badge">Detectando conexión...</span>
         <p id="feedback" class="feedback"></p>
       </section>
 
@@ -78,16 +78,16 @@
           <h2>Crear ticket</h2>
           <form id="ticketForm" class="ticket-form">
             <label>
-              Titulo
+              Título
               <input name="title" required minlength="3" maxlength="120" />
             </label>
             <label>
-              Descripcion
+              Descripción
               <textarea name="description" rows="3" required minlength="5" maxlength="1200"></textarea>
             </label>
             <div class="row-2">
               <label>
-                Categoria
+                Categoría
                 <input name="category" required placeholder="acceso, facturacion, reportes..." />
               </label>
               <label>
@@ -120,7 +120,7 @@
           <form id="filtersForm" class="filters-form">
             <label>
               Buscar
-              <input name="q" placeholder="titulo, descripcion o categoria" />
+              <input name="q" placeholder="título, descripción o categoría" />
             </label>
             <label>
               Estado
@@ -143,7 +143,7 @@
             </label>
             <label class="check-line">
               <input type="checkbox" name="mine" />
-              Ver solo tickets asignados a mi
+              Ver solo tickets asignados a mí
             </label>
           </form>
         </article>
@@ -155,7 +155,7 @@
             <thead>
               <tr>
                 <th>Ticket</th>
-                <th>Categoria</th>
+                <th>Categoría</th>
                 <th>Prioridad</th>
                 <th>Estado</th>
                 <th>Asignado a</th>

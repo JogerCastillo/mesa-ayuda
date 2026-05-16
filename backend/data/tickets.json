@@ -2,7 +2,7 @@
   {
     "id": "t-1001",
     "title": "No puedo entrar al panel",
-    "description": "El sistema rechaza mis credenciales despues del cambio de clave.",
+    "description": "El sistema rechaza mis credenciales después del cambio de clave.",
     "category": "acceso",
     "priority": "alta",
     "status": "abierto",
@@ -26,7 +26,7 @@
   {
     "id": "t-1003",
     "title": "Solicitud de reporte semanal",
-    "description": "Necesitamos un reporte CSV de incidencias cerradas por area.",
+    "description": "Necesitamos un reporte CSV de incidencias cerradas por área.",
     "category": "reportes",
     "priority": "baja",
     "status": "resuelto",

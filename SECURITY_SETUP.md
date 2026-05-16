@@ -22,7 +22,7 @@ Comprobaciones previas al despliegue:
 
 Incidentes y recuperación:
 - Si un secreto se filtra: rotar `JWT_SECRET` y forzar re-login de usuarios. Invalidar tokens viejos cambiando la clave.
-- Mantener copia de las notas de despliegue en un vault seguro (1Password, Bitwarden, Azure KeyVault).
+- Mantener copia de las notas de despliegue en un gestor de secretos (1Password, Bitwarden, Azure KeyVault).
 
 Contacto para despliegue:
 - Responsable: propietario del repositorio. Guardar las notas privadas fuera del repositorio principal.
