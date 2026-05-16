@@ -54,16 +54,15 @@ async function requestWithRetry(path, options = {}, attempts = 15) {
 }
 
 async function main() {
-  if (!process.env.JWT_SECRET || !process.env.ADMIN_PASSWORD || !process.env.AGENTE1_PASSWORD || !process.env.AGENTE2_PASSWORD) {
-    throw new Error("Environment required: JWT_SECRET, ADMIN_PASSWORD, AGENTE1_PASSWORD and AGENTE2_PASSWORD.");
+  if (!process.env.JWT_SECRET || !process.env.ADMIN_PASSWORD) {
+    throw new Error("Environment required: JWT_SECRET and ADMIN_PASSWORD.");
   }
 
   const server = spawn(process.execPath, ["src/server.js"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
-      PORT: String(PORT),
-      CREATE_DEV_USERS: "true"
+      PORT: String(PORT)
     },
     stdio: ["ignore", "pipe", "pipe"]
   });

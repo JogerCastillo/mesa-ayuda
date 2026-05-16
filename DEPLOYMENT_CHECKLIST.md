@@ -4,6 +4,7 @@ Pasos recomendados antes y durante el despliegue:
 
 1) Preparación del repositorio
 - Confirmar `.gitignore` incluye `backend/.env` y cualquier archivo de credenciales.
+- Confirmar `.gitignore` incluye `backend/data/users.json`, que se genera en runtime.
 - Actualizar `backend/.env.example` con placeholders claros.
 
 2) Configurar CI (GitHub Actions)
@@ -13,7 +14,8 @@ Pasos recomendados antes y durante el despliegue:
 
 3) Despliegue del backend
 - Usar un host compatible con Node.js y persistencia local mínima.
-- Crear el servicio con variables de entorno: `JWT_SECRET`, `BCRYPT_ROUNDS`, `CREATE_DEV_USERS=false`.
+- Crear el servicio con variables de entorno: `JWT_SECRET`, `ADMIN_PASSWORD`, `BCRYPT_ROUNDS`.
+- Si se quieren cuentas adicionales desde el inicio, agregar `AGENTE1_PASSWORD` y `AGENTE2_PASSWORD`.
 - Si el frontend se publica en otro dominio, definir `CORS_ORIGIN` con el origen exacto permitido.
 - Establecer health check a `/api/health`.
 - Verificar que el host permita mantener el proceso activo o gestionar arranque bajo demanda.

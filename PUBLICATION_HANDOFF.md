@@ -39,9 +39,9 @@ git push -u origin main
 Antes de publicar la aplicación:
 
 - Crear los Secrets requeridos en GitHub Actions.
-- Configurar `JWT_SECRET` en el proveedor de backend.
+- Configurar `JWT_SECRET` y `ADMIN_PASSWORD` en el proveedor de backend.
+- Si se desean agentes iniciales, definir también `AGENTE1_PASSWORD` y `AGENTE2_PASSWORD`.
 - Definir `CORS_ORIGIN` si frontend y backend viven en dominios distintos.
-- Mantener `CREATE_DEV_USERS=false` en staging y producción.
 - Verificar que `backend/.env` no se suba.
 - Confirmar que el smoke test sigue pasando.
 

@@ -37,8 +37,7 @@ Variables clave:
 - `PORT`
 - `JWT_SECRET`
 - `BCRYPT_ROUNDS`
-- `CREATE_DEV_USERS`
-- `ADMIN_PASSWORD`
+- `ADMIN_PASSWORD` (solo para bootstrap inicial si el archivo de usuarios aún no existe)
 - `AGENTE1_PASSWORD`
 - `AGENTE2_PASSWORD`
 
@@ -79,5 +78,6 @@ Ruta recomendada:
 
 ## Seguridad
 - `JWT_SECRET` obligatorio (no hay fallback inseguro).
-- Contraseñas de usuarios de desarrollo definidas solo por variables de entorno.
+- Las cuentas iniciales se crean desde variables de entorno la primera vez y luego quedan persistidas en `backend/data/users.json`.
+- `backend/data/users.json` se genera en runtime y no debe subirse al repositorio.
 - No subir `backend/.env` al repositorio.

@@ -8,7 +8,6 @@ Antes de publicar el repositorio, confirmar los siguientes puntos:
 - Textos públicos (`README.md`, `index.html`, mensajes de UI) usan tono profesional y no mencionan credenciales ni prototipos.
 - No hay archivos temporales ni de build en el repositorio (p. ej. `node_modules`, logs, `.tmp`). Verificar `.gitignore`.
 - Valores de ejemplo inseguros fueron reemplazados por placeholders (p. ej. `JWT_SECRET=change-this-value`).
-- `CREATE_DEV_USERS` está documentado y debe permanecer en `false` en entornos de staging/producción.
 - Se agregó documentación de seguridad y despliegue: `SECURITY_SETUP.md` y `DEPLOYMENT_CHECKLIST.md`.
 - Notas y archivos privados fueron movidos a un almacenamiento seguro fuera del repositorio (vault o carpeta privada).
 - El `smoke-test` fue validado localmente y devuelve `Smoke test OK`.

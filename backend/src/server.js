@@ -12,11 +12,11 @@ const { readJson, writeJson } = require("./store");
 const PORT = Number(process.env.PORT || 4200);
 const JWT_SECRET = process.env.JWT_SECRET;
 const BCRYPT_ROUNDS = Number(process.env.BCRYPT_ROUNDS || 10);
-const CREATE_DEV_USERS = String(process.env.CREATE_DEV_USERS || "").toLowerCase() === "true";
 const CORS_ORIGINS = String(process.env.CORS_ORIGIN || "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
+const USERS_FILE = path.join(__dirname, "..", "data", "users.json");
 const TICKETS_FILE = path.join(__dirname, "..", "data", "tickets.json");
 
 if (!JWT_SECRET) {
@@ -45,44 +45,80 @@ app.use(
 );
 app.use(express.json());
 
-const users = [];
-
 const hashPassword = (password) => bcrypt.hashSync(password, BCRYPT_ROUNDS);
 
-if (CREATE_DEV_USERS) {
-  const adminPassword = process.env.ADMIN_PASSWORD;
-  const agente1Password = process.env.AGENTE1_PASSWORD;
-  const agente2Password = process.env.AGENTE2_PASSWORD;
+const userSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  email: z.string().email(),
+  passwordHash: z.string().min(20),
+  role: z.enum(["admin", "agente"])
+});
 
-  if (!adminPassword || !agente1Password || !agente2Password) {
-    console.warn("CREATE_DEV_USERS está habilitado, pero falta ADMIN_PASSWORD, AGENTE1_PASSWORD o AGENTE2_PASSWORD.");
-  } else {
-    users.push(
-      {
-        id: "u-1",
-        name: "Admin Soporte",
-        email: "admin@soporte.local",
-        passwordHash: hashPassword(adminPassword),
-        role: "admin"
-      },
-      {
-        id: "u-2",
-        name: "Agente Uno",
-        email: "agente1@soporte.local",
-        passwordHash: hashPassword(agente1Password),
-        role: "agente"
-      },
-      {
-        id: "u-3",
-        name: "Agente Dos",
-        email: "agente2@soporte.local",
-        passwordHash: hashPassword(agente2Password),
-        role: "agente"
-      }
-    );
-    console.info("Usuarios de desarrollo cargados desde variables de entorno.");
+const userListSchema = z.array(userSchema);
+
+const readUsers = () => {
+  const parsed = userListSchema.safeParse(readJson(USERS_FILE, []));
+  return parsed.success ? parsed.data : [];
+};
+
+const saveUsers = (usersToSave) => writeJson(USERS_FILE, usersToSave);
+
+const createBootstrapUser = ({ id, name, email, password, role }) => ({
+  id,
+  name,
+  email,
+  passwordHash: hashPassword(password),
+  role
+});
+
+const initializeUsers = () => {
+  const existingUsers = readUsers();
+  if (existingUsers.length > 0) {
+    return existingUsers;
   }
-}
+
+  const bootstrapCandidates = [
+    {
+      id: "u-1",
+      name: "Admin Soporte",
+      email: "admin@soporte.local",
+      password: process.env.ADMIN_PASSWORD,
+      role: "admin"
+    },
+    {
+      id: "u-2",
+      name: "Agente Uno",
+      email: "agente1@soporte.local",
+      password: process.env.AGENTE1_PASSWORD,
+      role: "agente"
+    },
+    {
+      id: "u-3",
+      name: "Agente Dos",
+      email: "agente2@soporte.local",
+      password: process.env.AGENTE2_PASSWORD,
+      role: "agente"
+    }
+  ];
+
+  const bootstrapUsers = bootstrapCandidates
+    .filter((candidate) => Boolean(candidate.password))
+    .map(({ password, ...candidate }) => createBootstrapUser({ ...candidate, password }));
+
+  if (!bootstrapUsers.length) {
+    throw new Error(
+      "El almacén de usuarios está vacío. Define ADMIN_PASSWORD para crear el primer administrador."
+    );
+  }
+
+  saveUsers(bootstrapUsers);
+
+  console.info("User store initialized from environment variables.");
+  return bootstrapUsers;
+};
+
+const users = initializeUsers();
 
 const loginSchema = z.object({
   email: z.string().email(),
