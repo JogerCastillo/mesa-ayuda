@@ -500,11 +500,11 @@ body > * { position: relative; z-index: 1; }
 .badge:not(.offline)::after {
   content: '';
   position: absolute;
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   background: #05313a;
   border-radius: 50%;
-  right: 8px;
+  right: 3px;
   top: 50%;
   transform: translateY(-50%);
   animation: pulseDot 2s ease infinite;
