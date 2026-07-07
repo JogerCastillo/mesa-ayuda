@@ -68,13 +68,23 @@ npm test
 - `GET /api/dashboard/kpis`
 
 ## Despliegue
-Antes de desplegar, seguir la [Checklist de despliegue](DEPLOYMENT_CHECKLIST.md) y las recomendaciones de [Security Setup](SECURITY_SETUP.md).
 
-Ruta recomendada:
-- Frontend en Netlify.
-- Backend en un host compatible con Node.js.
-- `CORS_ORIGIN` configurado con el dominio del frontend.
-- `JWT_SECRET` y demás secretos cargados como variables de entorno.
+### Ruta recomendada
+- Frontend en Netlify (auto-despliegue desde Git, sin necesidad de build).
+- Backend en Render (plan gratuito, Node.js + Express).
+- `JWT_SECRET` y demás secretos cargados como variables de entorno en Render.
+- No requiere configurar `CORS_ORIGIN`: el proxy de Netlify redirige `/api/*` al backend, por lo que todas las peticiones son al mismo origen.
+
+### Proxy Netlify → Render
+El archivo `netlify.toml` en la raíz configura la redirección:
+
+```toml
+[[redirects]]
+  from = "/api/*"
+  to = "https://tu-api.onrender.com/api/:splat"
+  status = 200
+  force = true
+```
 
 ## Seguridad
 - `JWT_SECRET` obligatorio (no hay fallback inseguro).
