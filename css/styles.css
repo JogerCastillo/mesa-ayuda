@@ -36,7 +36,7 @@ body {
   pointer-events: none;
 }
 
-.container {
+.app-container {
   width: min(1120px, calc(100% - 2rem));
   margin-inline: auto;
 }
@@ -319,7 +319,7 @@ th {
 }
 
 @media (max-width: 640px) {
-  .container {
+  .app-container {
     width: min(1120px, calc(100% - 1rem));
   }
 
