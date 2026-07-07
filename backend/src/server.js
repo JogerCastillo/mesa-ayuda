@@ -2,12 +2,17 @@ require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const morgan = require("morgan");
+const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const path = require("path");
+const fs = require("fs");
 const crypto = require("crypto");
 const { z } = require("zod");
-const { readJson, writeJson } = require("./store");
+const { readJson, writeJson, writeJsonAtomic } = require("./store");
 
 const PORT = Number(process.env.PORT || 4200);
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -23,29 +28,79 @@ if (!JWT_SECRET) {
   throw new Error("JWT_SECRET is required. Define it in backend/.env or environment variables.");
 }
 
+if (JWT_SECRET.length < 32) {
+  throw new Error("JWT_SECRET must be at least 32 characters long for security.");
+}
+
 if (!Number.isInteger(BCRYPT_ROUNDS) || BCRYPT_ROUNDS < 8 || BCRYPT_ROUNDS > 14) {
   throw new Error("BCRYPT_ROUNDS must be an integer between 8 and 14.");
 }
 
+if (process.env.NODE_ENV === "production" && !CORS_ORIGINS.length) {
+  console.info("Production mode: CORS_ORIGIN not set. Cross-origin requests will be blocked.");
+}
+
 const app = express();
-app.use(
-  cors(
-    CORS_ORIGINS.length
-      ? {
-          origin(origin, callback) {
-            if (!origin || CORS_ORIGINS.includes(origin)) {
-              return callback(null, true);
-            }
 
-            return callback(new Error(`Origin ${origin} not allowed by CORS.`));
+app.set("trust proxy", 1);
+
+app.use(helmet());
+app.use(helmet.contentSecurityPolicy({
+  useDefaults: true,
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "https://cdn.tailwindcss.com"],
+    styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+    fontSrc: ["'self'", "https://fonts.gstatic.com"],
+    imgSrc: ["'self'", "data:"],
+    connectSrc: ["'self'"],
+    formAction: ["'self'"],
+    frameAncestors: ["'none'"],
+  },
+}));
+
+app.use(cors(
+  CORS_ORIGINS.length
+    ? {
+        origin(origin, callback) {
+          if (!origin || CORS_ORIGINS.includes(origin)) {
+            return callback(null, true);
           }
-        }
-      : undefined
-  )
-);
-app.use(express.json());
+          return callback(new Error("Origin not allowed by CORS."));
+        },
+        credentials: true,
+        methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
+      }
+    : { origin: false }
+));
 
-const hashPassword = (password) => bcrypt.hashSync(password, BCRYPT_ROUNDS);
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { message: "Demasiados intentos de inicio de sesión. Intenta de nuevo en 15 minutos." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: { message: "Demasiadas solicitudes. Intenta de nuevo más tarde." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use("/api/", apiLimiter);
+
+app.use(morgan("combined"));
+app.use(cookieParser());
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: false, limit: "10kb" }));
+
+const hashPassword = async (password) => bcrypt.hash(password, BCRYPT_ROUNDS);
+
+const tokenBlacklist = new Set();
 
 const userSchema = z.object({
   id: z.string().min(1),
@@ -62,17 +117,19 @@ const readUsers = () => {
   return parsed.success ? parsed.data : [];
 };
 
-const saveUsers = (usersToSave) => writeJson(USERS_FILE, usersToSave);
+const saveUsers = (usersToSave) => {
+  writeJsonAtomic(USERS_FILE, usersToSave);
+};
 
-const createBootstrapUser = ({ id, name, email, password, role }) => ({
+const createBootstrapUser = async ({ id, name, email, password, role }) => ({
   id,
   name,
   email,
-  passwordHash: hashPassword(password),
+  passwordHash: await hashPassword(password),
   role
 });
 
-const initializeUsers = () => {
+const initializeUsers = async () => {
   const existingUsers = readUsers();
   if (existingUsers.length > 0) {
     return existingUsers;
@@ -102,9 +159,11 @@ const initializeUsers = () => {
     }
   ];
 
-  const bootstrapUsers = bootstrapCandidates
-    .filter((candidate) => Boolean(candidate.password))
-    .map(({ password, ...candidate }) => createBootstrapUser({ ...candidate, password }));
+  const bootstrapUsers = await Promise.all(
+    bootstrapCandidates
+      .filter((candidate) => Boolean(candidate.password))
+      .map(async ({ password, ...candidate }) => createBootstrapUser({ ...candidate, password }))
+  );
 
   if (!bootstrapUsers.length) {
     throw new Error(
@@ -113,12 +172,9 @@ const initializeUsers = () => {
   }
 
   saveUsers(bootstrapUsers);
-
   console.info("User store initialized from environment variables.");
   return bootstrapUsers;
 };
-
-const users = initializeUsers();
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -134,7 +190,12 @@ const createTicketSchema = z.object({
   createdBy: z.string().email().optional()
 });
 
-const updateTicketSchema = z.object({
+const agentUpdateSchema = z.object({
+  status: z.enum(["abierto", "en_progreso", "resuelto", "cerrado"]).optional(),
+  assignedTo: z.union([z.string().email(), z.literal(""), z.null()]).optional()
+});
+
+const adminUpdateSchema = z.object({
   title: z.string().min(3).max(120).optional(),
   description: z.string().min(5).max(1200).optional(),
   category: z.string().min(2).max(40).optional(),
@@ -151,11 +212,21 @@ const getPublicUser = (user) => ({
 });
 
 const getTickets = () => readJson(TICKETS_FILE, []);
-const saveTickets = (tickets) => writeJson(TICKETS_FILE, tickets);
+const saveTickets = (tickets) => {
+  writeJsonAtomic(TICKETS_FILE, tickets);
+};
 
 const requireAuth = (req, res, next) => {
+  let token = null;
+
   const header = req.headers.authorization || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : null;
+  if (header.startsWith("Bearer ")) {
+    token = header.slice(7);
+  }
+
+  if (!token && req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  }
 
   if (!token) {
     return res.status(401).json({ message: "Token requerido." });
@@ -163,7 +234,13 @@ const requireAuth = (req, res, next) => {
 
   try {
     const payload = jwt.verify(token, JWT_SECRET);
+
+    if (payload.jti && tokenBlacklist.has(payload.jti)) {
+      return res.status(401).json({ message: "Token revocado." });
+    }
+
     req.user = payload;
+    req.tokenJti = payload.jti;
     return next();
   } catch {
     return res.status(401).json({ message: "Token inválido o expirado." });
@@ -181,42 +258,67 @@ const canEditTicket = (ticket, currentUser) => {
   if (currentUser.role === "admin") {
     return true;
   }
-
   return ticket.assignedTo === currentUser.email || ticket.createdBy === currentUser.email;
 };
 
 app.get("/api/health", (req, res) => {
-  res.json({
-    status: "ok",
-    service: "mesa-ayuda-api",
-    auth: true,
-    timestamp: new Date().toISOString()
-  });
+  res.json({ status: "ok", service: "mesa-ayuda-api" });
 });
 
-app.post("/api/auth/login", (req, res) => {
+app.post("/api/auth/login", loginLimiter, async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({
-      message: "Datos de acceso inválidos.",
-      issues: parsed.error.issues
-    });
+    return res.status(400).json({ message: "Datos de acceso inválidos." });
   }
 
   const { email, password } = parsed.data;
   const user = users.find((item) => item.email === email);
 
-  if (!user || !bcrypt.compareSync(password, user.passwordHash)) {
+  if (!user) {
+    return res.status(401).json({ message: "Credenciales incorrectas." });
+  }
+
+  const match = await bcrypt.compare(password, user.passwordHash);
+  if (!match) {
     return res.status(401).json({ message: "Credenciales incorrectas." });
   }
 
   const publicUser = getPublicUser(user);
-  const token = jwt.sign(publicUser, JWT_SECRET, { expiresIn: "8h" });
+  const jti = crypto.randomUUID();
+  const token = jwt.sign(
+    {
+      sub: user.id,
+      iss: "mesa-ayuda-api",
+      iat: Math.floor(Date.now() / 1000),
+      jti,
+      ...publicUser
+    },
+    JWT_SECRET,
+    { expiresIn: "8h" }
+  );
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 8 * 60 * 60 * 1000,
+    path: "/",
+  });
 
   return res.json({
     token,
     user: publicUser
   });
+});
+
+app.post("/api/auth/logout", requireAuth, (req, res) => {
+  if (req.tokenJti) {
+    tokenBlacklist.add(req.tokenJti);
+  }
+
+  res.clearCookie("token", { path: "/" });
+
+  return res.json({ message: "Sesión cerrada correctamente." });
 });
 
 app.get("/api/auth/me", requireAuth, (req, res) => {
@@ -272,10 +374,7 @@ app.get("/api/tickets", requireAuth, (req, res) => {
 app.post("/api/tickets", requireAuth, (req, res) => {
   const parsed = createTicketSchema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({
-      message: "Datos inválidos para crear ticket.",
-      issues: parsed.error.issues
-    });
+    return res.status(400).json({ message: "Datos inválidos para crear ticket." });
   }
 
   const now = new Date().toISOString();
@@ -304,12 +403,10 @@ app.post("/api/tickets", requireAuth, (req, res) => {
 });
 
 app.patch("/api/tickets/:id", requireAuth, (req, res) => {
-  const parsed = updateTicketSchema.safeParse(req.body);
+  const schema = req.user.role === "admin" ? adminUpdateSchema : agentUpdateSchema;
+  const parsed = schema.safeParse(req.body);
   if (!parsed.success) {
-    return res.status(400).json({
-      message: "Datos inválidos para actualizar ticket.",
-      issues: parsed.error.issues
-    });
+    return res.status(400).json({ message: "Datos inválidos para actualizar ticket." });
   }
 
   const tickets = getTickets();
@@ -377,6 +474,27 @@ app.get("/api/dashboard/kpis", requireAuth, (req, res) => {
   res.json({ data: kpis });
 });
 
-app.listen(PORT, () => {
-  console.log(`Mesa de ayuda API activa en http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV === "production") {
+  const frontendRoot = path.join(__dirname, "..", "..");
+  app.use(express.static(frontendRoot));
+
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api/")) return next();
+    res.sendFile(path.join(frontendRoot, "index.html"));
+  });
+}
+
+let users = [];
+
+const initializeApp = async () => {
+  try { fs.unlinkSync(path.join(__dirname, "..", "data", "users.json.tmp")); } catch {}
+  try { fs.unlinkSync(path.join(__dirname, "..", "data", "tickets.json.tmp")); } catch {}
+
+  users = await initializeUsers();
+
+  app.listen(PORT, () => {
+    console.log(`Mesa de ayuda API activa en http://localhost:${PORT}`);
+  });
+};
+
+initializeApp();

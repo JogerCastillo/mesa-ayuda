@@ -32,7 +32,14 @@ const writeJson = (filePath, value) => {
   fs.writeFileSync(filePath, JSON.stringify(value, null, 2), "utf8");
 };
 
+const writeJsonAtomic = (filePath, value) => {
+  const tmpPath = filePath + ".tmp";
+  writeJson(tmpPath, value);
+  fs.renameSync(tmpPath, filePath);
+};
+
 module.exports = {
   readJson,
-  writeJson
+  writeJson,
+  writeJsonAtomic
 };

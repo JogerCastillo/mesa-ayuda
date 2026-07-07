@@ -10,14 +10,34 @@
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Source+Sans+3:wght@400;600;700&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link rel="stylesheet" href="./css/styles.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        important: false,
+        corePlugins: { preflight: false }
+      }
+    </script>
   </head>
-  <body>
+  <body class="antialiased">
     <div class="bg-grid" aria-hidden="true"></div>
+
+    <div class="particles" aria-hidden="true">
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+      <div class="particle"></div>
+    </div>
+
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
 
     <header class="topbar container">
       <div>
-        <p class="eyebrow">Operación de soporte</p>
+        <p class="eyebrow">Operaci&oacute;n de soporte</p>
         <h1>Mesa de ayuda para soporte interno</h1>
         <p class="subtitle">Administra tickets, prioridades y carga operativa en tiempo real.</p>
       </div>
@@ -30,45 +50,60 @@
             <input type="email" name="email" required placeholder="admin@soporte.local" />
           </label>
           <label>
-            Contraseña
+            Contrase&ntilde;a
             <input type="password" name="password" required placeholder="********" />
           </label>
           <button type="submit">Entrar</button>
         </form>
 
         <div id="sessionInfo" class="session-info hidden">
-          <p><strong>Sesión:</strong> <span id="sessionName">-</span></p>
+          <p><strong>Sesi&oacute;n:</strong> <span id="sessionName">-</span></p>
           <p><strong>Rol:</strong> <span id="sessionRole">-</span></p>
-          <button id="logoutBtn" type="button" class="ghost">Cerrar sesión</button>
+          <button id="logoutBtn" type="button" class="ghost">Cerrar sesi&oacute;n</button>
         </div>
       </section>
     </header>
 
     <main class="container stack" id="appMain">
       <section class="meta-row">
-        <span id="connectionBadge" class="badge">Detectando conexión...</span>
+        <span id="connectionBadge" class="badge">Detectando conexi&oacute;n...</span>
         <p id="feedback" class="feedback"></p>
       </section>
 
       <section class="kpi-grid" id="kpiGrid">
         <article class="kpi-card">
-          <p>Total</p>
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="material-symbols-rounded text-lg" style="color:var(--accent)">confirmation_number</span>
+            <p class="m-0">Total</p>
+          </div>
           <strong id="kpiTotal">0</strong>
         </article>
         <article class="kpi-card">
-          <p>Abiertos</p>
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="material-symbols-rounded text-lg" style="color:var(--accent)">mark_email_unread</span>
+            <p class="m-0">Abiertos</p>
+          </div>
           <strong id="kpiOpen">0</strong>
         </article>
         <article class="kpi-card">
-          <p>En progreso</p>
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="material-symbols-rounded text-lg" style="color:var(--accent)">pending_actions</span>
+            <p class="m-0">En progreso</p>
+          </div>
           <strong id="kpiInProgress">0</strong>
         </article>
         <article class="kpi-card">
-          <p>Resueltos</p>
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="material-symbols-rounded text-lg" style="color:var(--ok)">check_circle</span>
+            <p class="m-0">Resueltos</p>
+          </div>
           <strong id="kpiResolved">0</strong>
         </article>
         <article class="kpi-card danger">
-          <p>Prioridad alta</p>
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="material-symbols-rounded text-lg" style="color:var(--danger)">priority_high</span>
+            <p class="m-0">Prioridad alta</p>
+          </div>
           <strong id="kpiHigh">0</strong>
         </article>
       </section>
@@ -78,16 +113,16 @@
           <h2>Crear ticket</h2>
           <form id="ticketForm" class="ticket-form">
             <label>
-              Título
+              T&iacute;tulo
               <input name="title" required minlength="3" maxlength="120" />
             </label>
             <label>
-              Descripción
+              Descripci&oacute;n
               <textarea name="description" rows="3" required minlength="5" maxlength="1200"></textarea>
             </label>
             <div class="row-2">
               <label>
-                Categoría
+                Categor&iacute;a
                 <input name="category" required placeholder="acceso, facturacion, reportes..." />
               </label>
               <label>
@@ -120,7 +155,7 @@
           <form id="filtersForm" class="filters-form">
             <label>
               Buscar
-              <input name="q" placeholder="título, descripción o categoría" />
+              <input name="q" placeholder="t&iacute;tulo, descripci&oacute;n o categor&iacute;a" />
             </label>
             <label>
               Estado
@@ -143,7 +178,7 @@
             </label>
             <label class="check-line">
               <input type="checkbox" name="mine" />
-              Ver solo tickets asignados a mí
+              Ver solo tickets asignados a m&iacute;
             </label>
           </form>
         </article>
@@ -155,7 +190,7 @@
             <thead>
               <tr>
                 <th>Ticket</th>
-                <th>Categoría</th>
+                <th>Categor&iacute;a</th>
                 <th>Prioridad</th>
                 <th>Estado</th>
                 <th>Asignado a</th>

@@ -34,5 +34,17 @@
     "updatedAt": "2026-04-20T16:45:00.000Z",
     "createdBy": "direccion@empresa.local",
     "assignedTo": "agente1@soporte.local"
+  },
+  {
+    "id": "fadefa36-5cb4-4fa7-bdb5-e01030c051c3",
+    "title": "Ticket de prueba",
+    "description": "Descripción segura XSS-free",
+    "category": "acceso",
+    "priority": "media",
+    "status": "abierto",
+    "createdAt": "2026-07-06T16:00:15.597Z",
+    "updatedAt": "2026-07-06T16:00:15.597Z",
+    "createdBy": "admin@soporte.local",
+    "assignedTo": null
   }
 ]

@@ -10,11 +10,7 @@ const getApiBaseUrl = () => {
     return metaTag.content.replace(/\/$/, "");
   }
 
-  if (
-    window.location.protocol === "file:" ||
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1"
-  ) {
+  if (window.location.protocol === "file:") {
     return "http://localhost:4200/api";
   }
 
@@ -69,6 +65,7 @@ const STATUS_OPTIONS = [
 const showFeedback = (message, isError = false) => {
   elements.feedback.textContent = message;
   elements.feedback.style.color = isError ? "#ffd0c3" : "#b8d3e6";
+  showToast(isError ? "error" : "info", message);
 };
 
 const formatDate = (value) =>
@@ -184,10 +181,22 @@ const loadAgents = async () => {
 };
 
 const fillAssignedSelect = () => {
-  const options = state.agents
-    .map((agent) => `<option value="${agent.email}">${agent.name} (${agent.email})</option>`)
-    .join("");
-  elements.assignedToSelect.innerHTML = `<option value="">Sin asignar</option>${options}`;
+  const fragment = document.createDocumentFragment();
+
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = 'Sin asignar';
+  fragment.appendChild(defaultOption);
+
+  state.agents.forEach((agent) => {
+    const option = document.createElement('option');
+    option.value = agent.email;
+    option.textContent = `${agent.name} (${agent.email})`;
+    fragment.appendChild(option);
+  });
+
+  elements.assignedToSelect.innerHTML = '';
+  elements.assignedToSelect.appendChild(fragment);
 };
 
 const canEditTicket = (ticket) => {
@@ -212,64 +221,134 @@ const applyFilters = (tickets) =>
 
 const renderKpis = () => {
   const tickets = state.tickets;
-  elements.kpiTotal.textContent = tickets.length;
-  elements.kpiOpen.textContent = tickets.filter((t) => t.status === "abierto").length;
-  elements.kpiInProgress.textContent = tickets.filter((t) => t.status === "en_progreso").length;
-  elements.kpiResolved.textContent = tickets.filter((t) => t.status === "resuelto").length;
-  elements.kpiHigh.textContent = tickets.filter((t) => t.priority === "alta").length;
+  const counts = {
+    kpiTotal: tickets.length,
+    kpiOpen: tickets.filter((t) => t.status === "abierto").length,
+    kpiInProgress: tickets.filter((t) => t.status === "en_progreso").length,
+    kpiResolved: tickets.filter((t) => t.status === "resuelto").length,
+    kpiHigh: tickets.filter((t) => t.priority === "alta").length,
+  };
+  Object.entries(counts).forEach(([id, target]) => {
+    const el = elements[id];
+    if (!el) return;
+    const current = parseInt(el.textContent, 10) || 0;
+    if (current !== target) animateCounter(el, target);
+  });
 };
 
 const renderTable = () => {
   const filtered = applyFilters([...state.tickets].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)));
+  const fragment = document.createDocumentFragment();
+
   if (!filtered.length) {
-    elements.ticketsBody.innerHTML = '<tr><td colspan="7">No hay tickets que coincidan con los filtros actuales.</td></tr>';
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.setAttribute('colspan', '7');
+    td.textContent = 'No hay tickets que coincidan con los filtros actuales.';
+    tr.appendChild(td);
+    fragment.appendChild(tr);
+    elements.ticketsBody.innerHTML = '';
+    elements.ticketsBody.appendChild(fragment);
     return;
   }
 
-  elements.ticketsBody.innerHTML = filtered
-    .map((ticket) => {
-      const statusOptions = STATUS_OPTIONS.map(
-        (option) => `<option value="${option.value}" ${option.value === ticket.status ? "selected" : ""}>${option.label}</option>`
-      ).join("");
+  filtered.forEach((ticket) => {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-id', ticket.id);
 
-      const assignOptions = state.agents
-        .map((agent) => `<option value="${agent.email}" ${agent.email === ticket.assignedTo ? "selected" : ""}>${agent.name}</option>`)
-        .join("");
+    const td1 = document.createElement('td');
+    const titleP = document.createElement('p');
+    titleP.className = 'ticket-title';
+    titleP.textContent = ticket.title;
+    const descP = document.createElement('p');
+    descP.className = 'ticket-desc';
+    descP.textContent = ticket.description;
+    td1.appendChild(titleP);
+    td1.appendChild(descP);
+    tr.appendChild(td1);
 
-      const canEdit = canEditTicket(ticket);
-      const canAssign = state.user?.role === "admin";
-      const canDelete = state.user?.role === "admin";
-      const canTake = state.user?.role === "agente" && !ticket.assignedTo;
+    const td2 = document.createElement('td');
+    td2.textContent = ticket.category;
+    tr.appendChild(td2);
 
-      return `
-      <tr data-id="${ticket.id}">
-        <td>
-          <p class="ticket-title">${ticket.title}</p>
-          <p class="ticket-desc">${ticket.description}</p>
-        </td>
-        <td>${ticket.category}</td>
-        <td><span class="pill prio-${ticket.priority}">${ticket.priority}</span></td>
-        <td>
-          <select class="status-select" data-action="status" ${canEdit ? "" : "disabled"}>
-            ${statusOptions}
-          </select>
-        </td>
-        <td>
-          <select class="assign-select" data-action="assign" ${canAssign ? "" : "disabled"}>
-            <option value="">Sin asignar</option>
-            ${assignOptions}
-          </select>
-        </td>
-        <td>${formatDate(ticket.updatedAt)}</td>
-        <td>
-          <div class="actions">
-            ${canTake ? '<button type="button" class="mini" data-action="take">Tomar</button>' : ""}
-            ${canDelete ? '<button type="button" class="mini danger-btn" data-action="delete">Eliminar</button>' : ""}
-          </div>
-        </td>
-      </tr>`;
-    })
-    .join("");
+    const td3 = document.createElement('td');
+    const pill = document.createElement('span');
+    pill.className = `pill prio-${ticket.priority}`;
+    pill.textContent = ticket.priority;
+    td3.appendChild(pill);
+    tr.appendChild(td3);
+
+    const td4 = document.createElement('td');
+    const statusSelect = document.createElement('select');
+    statusSelect.className = 'status-select';
+    statusSelect.setAttribute('data-action', 'status');
+    if (!canEditTicket(ticket)) statusSelect.disabled = true;
+    STATUS_OPTIONS.forEach((opt) => {
+      const option = document.createElement('option');
+      option.value = opt.value;
+      option.textContent = opt.label;
+      if (opt.value === ticket.status) option.selected = true;
+      statusSelect.appendChild(option);
+    });
+    td4.appendChild(statusSelect);
+    tr.appendChild(td4);
+
+    const td5 = document.createElement('td');
+    const assignSelect = document.createElement('select');
+    assignSelect.className = 'assign-select';
+    assignSelect.setAttribute('data-action', 'assign');
+    if (state.user?.role !== 'admin') assignSelect.disabled = true;
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = 'Sin asignar';
+    assignSelect.appendChild(defaultOpt);
+    state.agents.forEach((agent) => {
+      const option = document.createElement('option');
+      option.value = agent.email;
+      option.textContent = agent.name;
+      if (agent.email === ticket.assignedTo) option.selected = true;
+      assignSelect.appendChild(option);
+    });
+    td5.appendChild(assignSelect);
+    tr.appendChild(td5);
+
+    const td6 = document.createElement('td');
+    td6.textContent = formatDate(ticket.updatedAt);
+    tr.appendChild(td6);
+
+    const td7 = document.createElement('td');
+    const actions = document.createElement('div');
+    actions.className = 'actions';
+
+    const canTake = state.user?.role === 'agente' && !ticket.assignedTo;
+    const canDelete = state.user?.role === 'admin';
+
+    if (canTake) {
+      const takeBtn = document.createElement('button');
+      takeBtn.type = 'button';
+      takeBtn.className = 'mini';
+      takeBtn.setAttribute('data-action', 'take');
+      takeBtn.textContent = 'Tomar';
+      actions.appendChild(takeBtn);
+    }
+
+    if (canDelete) {
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'mini danger-btn';
+      deleteBtn.setAttribute('data-action', 'delete');
+      deleteBtn.textContent = 'Eliminar';
+      actions.appendChild(deleteBtn);
+    }
+
+    td7.appendChild(actions);
+    tr.appendChild(td7);
+    fragment.appendChild(tr);
+  });
+
+  elements.ticketsBody.innerHTML = '';
+  elements.ticketsBody.appendChild(fragment);
+  requestAnimationFrame(() => animateRows());
 };
 
 const renderAll = () => {
@@ -451,6 +530,83 @@ const onTableAction = async (event) => {
   } catch (error) {
     showFeedback(error.message, true);
   }
+};
+
+const showToast = (type, message, duration = 4000) => {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const icons = { info: 'info', error: 'error', success: 'check_circle' };
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+
+  const iconSpan = document.createElement('span');
+  iconSpan.className = 'toast-icon material-symbols-rounded';
+  iconSpan.textContent = icons[type] || 'info';
+
+  const textSpan = document.createElement('span');
+  textSpan.className = 'toast-text';
+  textSpan.textContent = message;
+
+  const dismissBtn = document.createElement('button');
+  dismissBtn.className = 'toast-dismiss material-symbols-rounded';
+  dismissBtn.setAttribute('aria-label', 'Cerrar');
+  dismissBtn.textContent = 'close';
+  dismissBtn.addEventListener('click', () => dismissToast(toast));
+
+  toast.appendChild(iconSpan);
+  toast.appendChild(textSpan);
+  toast.appendChild(dismissBtn);
+  container.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('show'));
+
+  toast._timeout = setTimeout(() => dismissToast(toast), duration);
+};
+
+const dismissToast = (toast) => {
+  if (toast._dismissed) return;
+  toast._dismissed = true;
+  clearTimeout(toast._timeout);
+  toast.classList.remove('show');
+  toast.classList.add('hiding');
+  setTimeout(() => toast.remove(), 350);
+};
+
+const animateCounter = (element, target, duration = 600) => {
+  const start = parseInt(element.textContent, 10) || 0;
+  if (start === target) return;
+
+  const diff = target - start;
+  const startTime = performance.now();
+
+  const tick = (now) => {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    const current = Math.round(start + diff * eased);
+    element.textContent = current;
+    if (progress < 1) {
+      requestAnimationFrame(tick);
+    } else {
+      element.textContent = target;
+    }
+  };
+
+  requestAnimationFrame(tick);
+};
+
+const animateRows = () => {
+  const rows = elements.ticketsBody.querySelectorAll('tr');
+  rows.forEach((row, index) => {
+    row.style.opacity = '0';
+    row.style.transform = 'translateY(8px)';
+    row.style.transition = `opacity 0.35s ease ${index * 0.05}s, transform 0.35s ease ${index * 0.05}s`;
+    requestAnimationFrame(() => {
+      row.style.opacity = '1';
+      row.style.transform = 'translateY(0)';
+    });
+  });
 };
 
 const init = async () => {
