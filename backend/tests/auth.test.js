@@ -1,5 +1,6 @@
 const assert = require("node:assert/strict");
 const jwt = require("jsonwebtoken");
+const path = require("node:path");
 const { test } = require("node:test");
 const { login, TEST_USERS } = require("./helpers/fixtures");
 const { getServer, setup } = require("./helpers/setup");
@@ -7,8 +8,10 @@ const { TEST_JWT_SECRET } = require("./helpers/server");
 
 setup({ withTickets: false });
 
-test("valid credentials return a valid JWT and public user", async () => {
-  const { baseUrl } = getServer();
+test("server authenticates a user loaded from the configured temp DATA_DIR", async () => {
+  const { baseUrl, dataDir } = getServer();
+  assert.notEqual(dataDir, path.resolve(__dirname, "..", "data"));
+
   const response = await fetch(`${baseUrl}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
