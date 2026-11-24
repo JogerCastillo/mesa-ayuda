@@ -484,6 +484,14 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
+app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+  const status = err.status || 500;
+  res.status(status).json({
+    error: status === 500 ? "Internal server error" : (err.message || "Error")
+  });
+});
+
 let users = [];
 
 const initializeApp = async () => {
