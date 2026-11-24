@@ -12,7 +12,7 @@ const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
 const { z } = require("zod");
-const { readJson, writeJson, writeJsonAtomic } = require("./store");
+const { DATA_DIR, readJson, writeJson, writeJsonAtomic } = require("./store");
 
 const PORT = Number(process.env.PORT || 4200);
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -21,8 +21,8 @@ const CORS_ORIGINS = String(process.env.CORS_ORIGIN || "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
-const USERS_FILE = path.join(__dirname, "..", "data", "users.json");
-const TICKETS_FILE = path.join(__dirname, "..", "data", "tickets.json");
+const USERS_FILE = path.join(DATA_DIR, "users.json");
+const TICKETS_FILE = path.join(DATA_DIR, "tickets.json");
 
 if (!JWT_SECRET) {
   throw new Error("JWT_SECRET is required. Define it in backend/.env or environment variables.");
@@ -487,8 +487,8 @@ if (process.env.NODE_ENV === "production") {
 let users = [];
 
 const initializeApp = async () => {
-  try { fs.unlinkSync(path.join(__dirname, "..", "data", "users.json.tmp")); } catch {}
-  try { fs.unlinkSync(path.join(__dirname, "..", "data", "tickets.json.tmp")); } catch {}
+  try { fs.unlinkSync(path.join(DATA_DIR, "users.json.tmp")); } catch {}
+  try { fs.unlinkSync(path.join(DATA_DIR, "tickets.json.tmp")); } catch {}
 
   users = await initializeUsers();
 

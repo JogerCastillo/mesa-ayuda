@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "..", "data");
+
 const ensureFile = (filePath, fallbackValue) => {
   const dir = path.dirname(filePath);
   if (!fs.existsSync(dir)) {
@@ -39,6 +41,7 @@ const writeJsonAtomic = (filePath, value) => {
 };
 
 module.exports = {
+  DATA_DIR,
   readJson,
   writeJson,
   writeJsonAtomic
