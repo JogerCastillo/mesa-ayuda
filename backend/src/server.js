@@ -500,8 +500,9 @@ const initializeApp = async () => {
 
   users = await initializeUsers();
 
-  app.listen(PORT, () => {
-    console.log(`Mesa de ayuda API activa en http://localhost:${PORT}`);
+  const server = app.listen(PORT, () => {
+    const address = server.address();
+    console.log(`Mesa de ayuda API activa en http://localhost:${address.port}`);
   });
 };
 
