@@ -1,5 +1,7 @@
 # Mesa de Ayuda (Tickets de Soporte)
 
+[![CI](https://github.com/JogerCastillo/mesa-ayuda/actions/workflows/ci.yml/badge.svg)](https://github.com/JogerCastillo/mesa-ayuda/actions/workflows/ci.yml)
+
 Aplicación web profesional para gestionar tickets internos de soporte, con autenticación por roles, filtros operativos y métricas de seguimiento.
 
 ## Capacidades clave
@@ -55,6 +57,24 @@ Luego abrir `index.html` en el navegador.
 cd backend
 npm test
 ```
+
+## CI/CD
+
+Every push to `main` and every pull request targeting `main` triggers:
+
+| Job | What it does |
+|---|---|
+| **Backend tests** | Runs 25 `node:test` cases for auth, RBAC, validation, tickets and KPIs on Node 20, followed by the smoke test. |
+| **Frontend static checks** | Checks JavaScript syntax with `node --check` and verifies required HTML tags. |
+
+The backend suite runs in about 2.5 seconds locally. Each test file uses a temporary `DATA_DIR`; CI also directs the smoke test to the runner's temporary directory. These checks do not provide frontend test coverage or a coverage report.
+
+**Known limitations**:
+
+- There are no automated frontend tests; the vanilla JavaScript UI still requires manual smoke testing.
+- Rate-limiting behavior is not covered by tests; the limiter currently uses in-memory state.
+- The client does not call `POST /api/auth/logout`; the server's JWT revocation blacklist is in memory and resets on restart.
+- **UI/backend mismatch:** the UI offers a "Tomar" button for any unassigned ticket, but the backend only lets agents edit tickets they created or that are assigned to them. An agent therefore cannot claim an arbitrary unassigned ticket. The code does not document whether this restriction is intentional; the UI and backend behavior should be reconciled post-MVP.
 
 ## Endpoints principales
 - `GET /api/health`
