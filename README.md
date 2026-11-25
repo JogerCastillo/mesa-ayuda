@@ -79,7 +79,7 @@ On login, the API returns a JWT in JSON and also sets an HttpOnly cookie; the br
 `localStorage`. Netlify rewrites `/api/*` to the Render host in `netlify.toml`. The API reads and writes JSON under
 `DATA_DIR` (default: `backend/data`).
 
-<!-- TODO: add screenshot of dashboard -->
+![Mesa de Ayuda dashboard showing KPIs and ticket list](docs/screenshot-dashboard.jpg)
 
 ## Key technical decisions
 
